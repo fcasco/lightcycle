@@ -87,31 +87,36 @@ class TestArena(unittest.TestCase):
         class BrokenLightCycle(LightCycleRandomBot):
             def __init__(self, *args, **kwargs):
                 return 1/0
+        expected_error_msg = 'Exception (ZeroDivisionError: integer division or modulo by zero)'
         player3 = Player('Player 3', BrokenLightCycle)
         match = LightCycleArena((self.player1, player3), self.width, self.height).start()
         self.assertEqual(match['result']['winner'], self.player1.username)
-        self.assertEqual(match['result']['lost'][player3.username], 'Exception (integer division or modulo by zero)', 'Player 3 should timeout due to a crash')
+        self.assertEqual(match['result']['lost'][player3.username], expected_error_msg,
+                            'Player 3 should timeout due to a crash')
 
     def test_bot_crash_on_move(self):
         class BrokenLightCycle(LightCycleRandomBot):
             def get_next_step(self, *args, **kwargs):
                 return 1/0
+        expected_error_msg = 'Exception (ZeroDivisionError: integer division or modulo by zero)'
         player3 = Player('Player 3', BrokenLightCycle)
         match = LightCycleArena((self.player1, player3), self.width, self.height).start()
         self.assertEqual(match['result']['winner'], self.player1.username)
-        self.assertEqual(match['result']['lost'][player3.username], 'Exception (integer division or modulo by zero)', 'Player 3 should timeout due to a crash')
+        self.assertEqual(match['result']['lost'][player3.username], expected_error_msg,
+                            'Player 3 should timeout due to a crash')
 
     def test_tie(self):
         class BrokenLightCycle(LightCycleRandomBot):
             def get_next_step(self, *args, **kwargs):
                 return 1/0
+        expected_error_msg = 'Exception (ZeroDivisionError: integer division or modulo by zero)'
         player3 = Player('Player 3', BrokenLightCycle)
         player4 = Player('Player 4', BrokenLightCycle)
         match = LightCycleArena((player3, player4), self.width, self.height).start()
         self.assertNotIn('winner', match['result'])
         self.assertEqual(match['result']['lost'],
-                         {player3.username: 'Exception (integer division or modulo by zero)',
-                          player4.username: 'Exception (integer division or modulo by zero)'},
+                         {player3.username: expected_error_msg,
+                          player4.username: expected_error_msg},
                          'Players 3 and 4 should both timeout simultaneously due to a crash (it was a tie)')
 
     def test_attacks(self):
@@ -120,10 +125,11 @@ class TestArena(unittest.TestCase):
         botsrc = ('''class LightCycleRandomBot(LightCycleBaseBot):\n'''
                   '''    def get_next_step(self, *args, **kwargs):\n'''
                   '''        import %s;return "N"''' % m)
+        expected_error_msg = 'Exception (ImportError: No module named %s)' % m
         player3 = Player('Player 3', botsrc)
         player4 = Player('Player 4', botsrc)
         match = LightCycleArena((player3, player4), self.width, self.height).start()
         self.assertEqual(match['result']['lost'],
-                         {player3.username: 'Exception (No module named %s)' % m,
-                          player4.username: 'Exception (No module named %s)' % m},
+                         {player3.username: expected_error_msg,
+                          player4.username: expected_error_msg},
                          'Players 3 and 4 should both timeout simultaneously due to an invalid import')
